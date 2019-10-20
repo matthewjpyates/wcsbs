@@ -244,6 +244,8 @@ MongoClient.connect(url, function(err, db) {{
   }});
 }});
 
+
+/*
  MongoClient.connect(url, function(err, db) {{
    if (err) throw err;
    var dbo = db.db("chatdb");
@@ -255,9 +257,11 @@ MongoClient.connect(url, function(err, db) {{
      db.close();
    }});
  }});
+*/
 
 
 
+/*
 MongoClient.connect(url, function(err, db) {{
     if (err) throw err;
     var dbo = db.db("chatdb");
@@ -272,7 +276,7 @@ MongoClient.connect(url, function(err, db) {{
     }});
   }});
 
-
+*/
 
 
 
@@ -326,13 +330,25 @@ function getObjectIdStrFromDate(date) {{
   MongoClient.connect(url, function(err, db) {{
     if (err) throw err;
     var dbo = db.db("chatdb");
-    dbo.collection("messages").find({{ $and: [ {{_id: {{$gt: ObjectId(getObjectIdStrFromDate(new Date(timeInMillis))) }} }},
-    {{toid: user }}] }},
-    {{ projection: {{ _id: 0, toid: 1, fromid: 1,  encmessagehexstr: 1 }} }}).toArray(function(err,     result) {{
-      if (err) throw err;
+     dbo.collection("messages").find({{toid: user }},
+     {{ projection: {{ _id: 1, toid: 1, fromid: 1,  encmessagehexstr: 1 }} }}).toArray(function(err,     result) {{
+       if (err) throw err;
+	output = []
+
+	for(var ii=0; ii <result.length; ii++) {{
+		if(getDateFromObjID(result[ii]["_id"] +'').getTime() > timeInMillis)
+		{{
+		var itemtoadd = new Object();
+		itemtoadd.toid = result[ii]["toid"];
+		itemtoadd.fromid = result[ii]["fromid"];
+		itemtoadd.encmessagehexstr = result[ii]["encmessagehexstr"];
+		output.push(itemtoadd)	
+		}}
+	}}
+
       console.log("pulling messages after "+ timeInMillis.toString() + " for " + user);
 
-      res.send(result);
+      res.send(output);
       db.close();
   }});
   }});
@@ -439,11 +455,12 @@ app.get('/{pc}messages/:chatid', function (req, res) {{
 app.get('/{pc}messagesaftertime/:chatid/:time', function (req, res) {{
    var chatIdToCheck = req.params.chatid;
    var timeinmillisecs = parseInt(req.params.time)
-   if(timeinmillisecs <1567322250000)
+        
+   if(timeinmillisecs <1700000000)
    {{       res.send('[]')}}
     else
     {{
-
+console.log("checking for all messages for " + chatIdToCheck + " after time " + timeinmillisecs);
      pullAllMessagesForUserAfterTimeStamp(res, chatIdToCheck,timeinmillisecs)
   }}
 
